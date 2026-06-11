@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.example</groupId>
+    <groupId>lt.viko.eif</groupId>
     <artifactId>habit-tracker</artifactId>
     <version>1.0.0</version>
     <name>Habit Tracker API</name>
