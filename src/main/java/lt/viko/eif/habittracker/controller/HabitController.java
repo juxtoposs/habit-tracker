@@ -1,5 +1,6 @@
 package lt.viko.eif.habittracker.controller;
 
+import lt.viko.eif.habittracker.exception.ResourceNotFoundException;
 import lt.viko.eif.habittracker.model.Habit;
 import lt.viko.eif.habittracker.service.HabitService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,17 +60,16 @@ public class HabitController {
      * Get a habit by ID.
      *
      * @param id habit identifier
-     * @return habit with HATEOAS links or 404
+     * @return habit with HATEOAS links
+     * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException if habit is not found
      */
     @GetMapping("/{id}")
     @Operation(summary = "Get habit by ID")
     public ResponseEntity<EntityModel<HabitModel>> getHabitById(@PathVariable Long id) {
-        return habitService.findById(id)
-                .map(habit -> {
-                    HabitModel model = toModel(habit);
-                    return ResponseEntity.ok(EntityModel.of(model));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        Habit habit = habitService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Habit", id));
+        HabitModel model = toModel(habit);
+        return ResponseEntity.ok(EntityModel.of(model));
     }
 
     /**
@@ -92,6 +92,7 @@ public class HabitController {
      * @param id    habit identifier
      * @param habit new data
      * @return updated habit
+     * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException if habit is not found
      */
     @PutMapping("/{id}")
     @Operation(summary = "Update a habit")
@@ -108,6 +109,7 @@ public class HabitController {
      *
      * @param id habit identifier
      * @return status 204 No Content
+     * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException if habit is not found
      */
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a habit")

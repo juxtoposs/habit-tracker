@@ -42,6 +42,7 @@ public class HabitLogController {
      *
      * @param habitId habit ID
      * @return collection of logs with HATEOAS links
+     * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException if habit is not found
      */
     @GetMapping
     @Operation(summary = "Get completion logs for a habit")
@@ -63,6 +64,8 @@ public class HabitLogController {
      * @param habitId       habit ID
      * @param completedDate completion date (format yyyy-MM-dd)
      * @return created log with status 201
+     * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException  if habit is not found
+     * @throws lt.viko.eif.habittracker.exception.DuplicateResourceException if log already exists for this date
      */
     @PostMapping
     @Operation(summary = "Mark habit as completed")
@@ -80,6 +83,7 @@ public class HabitLogController {
      * @param habitId habit ID (for correct URL structure)
      * @param logId   log ID
      * @return status 204 No Content
+     * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException if log is not found
      */
     @DeleteMapping("/{logId}")
     @Operation(summary = "Delete a completion record")

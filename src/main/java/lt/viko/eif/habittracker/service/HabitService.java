@@ -40,7 +40,7 @@ public interface HabitService {
      * @param id    habit identifier
      * @param habit new habit data
      * @return updated habit
-     * @throws IllegalArgumentException if habit is not found
+     * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException if habit is not found
      */
     Habit update(Long id, Habit habit);
 
@@ -48,7 +48,7 @@ public interface HabitService {
      * Deletes a habit by ID.
      *
      * @param id habit identifier
-     * @throws IllegalArgumentException if habit is not found
+     * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException if habit is not found
      */
     void delete(Long id);
 }

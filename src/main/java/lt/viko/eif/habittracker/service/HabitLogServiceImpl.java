@@ -1,5 +1,7 @@
 package lt.viko.eif.habittracker.service;
 
+import lt.viko.eif.habittracker.exception.DuplicateResourceException;
+import lt.viko.eif.habittracker.exception.ResourceNotFoundException;
 import lt.viko.eif.habittracker.model.Habit;
 import lt.viko.eif.habittracker.model.HabitLog;
 import lt.viko.eif.habittracker.repository.HabitLogRepository;
@@ -34,16 +36,19 @@ public class HabitLogServiceImpl implements HabitLogService {
     @Override
     @Transactional(readOnly = true)
     public List<HabitLog> findByHabitId(Long habitId) {
+        if (!habitRepository.existsById(habitId)) {
+            throw new ResourceNotFoundException("Habit", habitId);
+        }
         return habitLogRepository.findByHabitId(habitId);
     }
 
     @Override
     public HabitLog markCompleted(Long habitId, LocalDate completedDate) {
         Habit habit = habitRepository.findById(habitId)
-                .orElseThrow(() -> new IllegalArgumentException("Habit with ID " + habitId + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Habit", habitId));
 
         if (habitLogRepository.existsByHabitIdAndCompletedDate(habitId, completedDate)) {
-            throw new IllegalArgumentException("Habit already marked for date " + completedDate);
+            throw new DuplicateResourceException("Habit already marked as completed for date " + completedDate);
         }
 
         HabitLog log = new HabitLog(completedDate);
@@ -53,6 +58,9 @@ public class HabitLogServiceImpl implements HabitLogService {
 
     @Override
     public void deleteLog(Long logId) {
+        if (!habitLogRepository.existsById(logId)) {
+            throw new ResourceNotFoundException("Habit log", logId);
+        }
         habitLogRepository.deleteById(logId);
     }
 }

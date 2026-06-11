@@ -1,5 +1,6 @@
 package lt.viko.eif.habittracker.service;
 
+import lt.viko.eif.habittracker.exception.ResourceNotFoundException;
 import lt.viko.eif.habittracker.model.Habit;
 import lt.viko.eif.habittracker.repository.HabitRepository;
 import org.springframework.stereotype.Service;
@@ -47,7 +48,7 @@ public class HabitServiceImpl implements HabitService {
     @Override
     public Habit update(Long id, Habit habitDetails) {
         Habit habit = habitRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Habit with ID " + id + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Habit", id));
 
         habit.setName(habitDetails.getName());
         habit.setDescription(habitDetails.getDescription());
@@ -57,7 +58,7 @@ public class HabitServiceImpl implements HabitService {
     @Override
     public void delete(Long id) {
         if (!habitRepository.existsById(id)) {
-            throw new IllegalArgumentException("Habit with ID " + id + " not found");
+            throw new ResourceNotFoundException("Habit", id);
         }
         habitRepository.deleteById(id);
     }

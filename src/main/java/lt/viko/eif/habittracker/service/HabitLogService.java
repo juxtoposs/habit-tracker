@@ -16,6 +16,7 @@ public interface HabitLogService {
      *
      * @param habitId habit ID
      * @return list of logs
+     * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException if habit is not found
      */
     List<HabitLog> findByHabitId(Long habitId);
 
@@ -25,7 +26,8 @@ public interface HabitLogService {
      * @param habitId       habit ID
      * @param completedDate completion date
      * @return created log
-     * @throws IllegalArgumentException if habit is not found or log already exists
+     * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException  if habit is not found
+     * @throws lt.viko.eif.habittracker.exception.DuplicateResourceException if log already exists for this date
      */
     HabitLog markCompleted(Long habitId, LocalDate completedDate);
 
@@ -33,6 +35,7 @@ public interface HabitLogService {
      * Deletes a completion log by ID.
      *
      * @param logId log ID
+     * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException if log is not found
      */
     void deleteLog(Long logId);
 }
