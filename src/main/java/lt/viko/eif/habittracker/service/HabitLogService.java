@@ -32,10 +32,11 @@ public interface HabitLogService {
     HabitLog markCompleted(Long habitId, LocalDate completedDate);
 
     /**
-     * Deletes a completion log by ID.
+     * Deletes a completion log only if it belongs to the selected habit.
      *
-     * @param logId log ID
-     * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException if log is not found
+     * @param habitId habit identifier
+     * @param logId log identifier
+     * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException if the habit or log is not found
      */
-    void deleteLog(Long logId);
+    void deleteLog(Long habitId, Long logId);
 }

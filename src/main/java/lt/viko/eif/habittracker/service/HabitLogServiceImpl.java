@@ -57,10 +57,16 @@ public class HabitLogServiceImpl implements HabitLogService {
     }
 
     @Override
-    public void deleteLog(Long logId) {
-        if (!habitLogRepository.existsById(logId)) {
-            throw new ResourceNotFoundException("Habit log", logId);
+    public void deleteLog(Long habitId, Long logId) {
+        if (!habitRepository.existsById(habitId)) {
+            throw new ResourceNotFoundException("Habit", habitId);
         }
-        habitLogRepository.deleteById(logId);
+
+        HabitLog log = habitLogRepository.findByIdAndHabit_Id(logId, habitId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Habit log with ID " + logId
+                                + " was not found for habit with ID " + habitId
+                ));
+        habitLogRepository.delete(log);
     }
 }

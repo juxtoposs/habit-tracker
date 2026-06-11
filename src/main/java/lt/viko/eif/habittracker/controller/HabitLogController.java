@@ -88,7 +88,7 @@ public class HabitLogController {
     @DeleteMapping("/{logId}")
     @Operation(summary = "Delete a completion record")
     public ResponseEntity<Void> deleteLog(@PathVariable Long habitId, @PathVariable Long logId) {
-        habitLogService.deleteLog(logId);
+        habitLogService.deleteLog(habitId, logId);
         return ResponseEntity.noContent().build();
     }
 

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository for accessing HabitLog data.
@@ -30,4 +31,6 @@ public interface HabitLogRepository extends JpaRepository<HabitLog, Long> {
      * @return true if log exists
      */
     boolean existsByHabitIdAndCompletedDate(Long habitId, LocalDate completedDate);
+
+    Optional<HabitLog> findByIdAndHabit_Id(Long id, Long habitId);
 }
