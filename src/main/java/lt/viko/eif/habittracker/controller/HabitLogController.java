@@ -1,5 +1,6 @@
 package lt.viko.eif.habittracker.controller;
 
+import lt.viko.eif.habittracker.config.CacheSettings;
 import lt.viko.eif.habittracker.model.HabitLog;
 import lt.viko.eif.habittracker.service.HabitLogService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,7 +56,10 @@ public class HabitLogController {
         CollectionModel<HabitLogModel> collection = CollectionModel.of(models,
                 linkTo(methodOn(HabitLogController.class).getLogsForHabit(habitId)).withSelfRel(),
                 linkTo(methodOn(HabitController.class).getHabitById(habitId)).withRel("habit"));
-        return ResponseEntity.ok(collection);
+
+        return ResponseEntity.ok()
+                .cacheControl(CacheSettings.shortPrivateCache())
+                .body(collection);
     }
 
     /**

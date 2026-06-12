@@ -1,5 +1,6 @@
 package lt.viko.eif.habittracker.controller;
 
+import lt.viko.eif.habittracker.config.CacheSettings;
 import lt.viko.eif.habittracker.exception.ResourceNotFoundException;
 import lt.viko.eif.habittracker.model.Habit;
 import lt.viko.eif.habittracker.service.HabitService;
@@ -53,7 +54,10 @@ public class HabitController {
 
         Link selfLink = linkTo(methodOn(HabitController.class).getAllHabits()).withSelfRel();
         CollectionModel<HabitModel> collection = CollectionModel.of(models, selfLink);
-        return ResponseEntity.ok(collection);
+
+        return ResponseEntity.ok()
+                .cacheControl(CacheSettings.shortPrivateCache())
+                .body(collection);
     }
 
     /**
@@ -69,7 +73,10 @@ public class HabitController {
         Habit habit = habitService.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Habit", id));
         HabitModel model = toModel(habit);
-        return ResponseEntity.ok(EntityModel.of(model));
+        
+        return ResponseEntity.ok()
+                .cacheControl(CacheSettings.shortPrivateCache())
+                .body(EntityModel.of(model));
     }
 
     /**
