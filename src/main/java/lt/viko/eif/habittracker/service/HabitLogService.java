@@ -39,4 +39,14 @@ public interface HabitLogService {
      * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException if the habit or log is not found
      */
     void deleteLog(Long habitId, Long logId);
+
+    /**
+     * Finds a single completion log only if it belongs to the selected habit.
+     *
+     * @param habitId habit identifier
+     * @param logId log identifier
+     * @return habit completion log
+     * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException if the habit or log is not found
+     */
+    HabitLog findByIdAndHabitId(Long habitId, Long logId);
 }
