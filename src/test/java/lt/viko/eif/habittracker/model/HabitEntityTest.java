@@ -3,6 +3,9 @@ package lt.viko.eif.habittracker.model;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for Habit JPA entity lifecycle methods.
+ */
 class HabitEntityTest {
 
     @Test
