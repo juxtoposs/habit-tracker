@@ -1,5 +1,6 @@
 package lt.viko.eif.habittracker.service;
 
+import lt.viko.eif.habittracker.exception.ResourceNotFoundException;
 import lt.viko.eif.habittracker.model.Habit;
 import lt.viko.eif.habittracker.repository.HabitRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -93,7 +94,8 @@ class HabitServiceImplTest {
     void update_WhenNotExists_ShouldThrowException() {
         when(habitRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class,
+        // Виправлено: тепер тест очікує ResourceNotFoundException
+        assertThrows(ResourceNotFoundException.class,
                 () -> habitService.update(99L, new Habit("Test", "Description")));
     }
 
@@ -110,6 +112,7 @@ class HabitServiceImplTest {
     void delete_WhenNotExists_ShouldThrowException() {
         when(habitRepository.existsById(99L)).thenReturn(false);
 
-        assertThrows(IllegalArgumentException.class, () -> habitService.delete(99L));
+        // Виправлено: тепер тест очікує ResourceNotFoundException
+        assertThrows(ResourceNotFoundException.class, () -> habitService.delete(99L));
     }
 }
