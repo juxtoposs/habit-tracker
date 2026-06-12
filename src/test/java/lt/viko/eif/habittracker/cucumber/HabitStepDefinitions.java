@@ -9,13 +9,20 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import lt.viko.eif.habittracker.dto.HabitRequest;
 import lt.viko.eif.habittracker.model.Habit;
+import lt.viko.eif.habittracker.model.HabitLog;
 import lt.viko.eif.habittracker.repository.HabitLogRepository;
 import lt.viko.eif.habittracker.repository.HabitRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 
+import java.time.LocalDate;
+import java.util.HashMap;
+
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +37,9 @@ public class HabitStepDefinitions {
     private final HabitRepository habitRepository;
     private final HabitLogRepository habitLogRepository;
     private final ObjectMapper objectMapper;
+    private final Map<String, Long> habitIds = new HashMap<>();
+    private Long latestLogId;
+    private String latestEtag;
 
     public HabitStepDefinitions(
             TestRestTemplate restTemplate,
@@ -52,7 +62,11 @@ public class HabitStepDefinitions {
     public void cleanDatabaseBeforeScenario() {
         habitLogRepository.deleteAll();
         habitRepository.deleteAll();
+
+        habitIds.clear();
         response = null;
+        latestLogId = null;
+        latestEtag = null;
     }
 
     @Given("the habit repository is empty")
@@ -74,7 +88,8 @@ public class HabitStepDefinitions {
                     columns.get("description")
             );
 
-            habitRepository.save(habit);
+            Habit savedHabit = habitRepository.save(habit);
+            habitIds.put(savedHabit.getName(), savedHabit.getId());
         }
     }
 
@@ -130,6 +145,128 @@ public class HabitStepDefinitions {
         assertTrue(
                 links.has(rel),
                 "Expected response to contain HATEOAS link: " + rel
+        );
+    }
+
+    @Given("a habit named {string} exists with description {string}")
+    public void aHabitNamedExistsWithDescription(String name, String description) {
+        Habit habit = new Habit(name, description);
+        Habit savedHabit = habitRepository.save(habit);
+        habitIds.put(name, savedHabit.getId());
+    }
+
+    @Given("habit {string} was completed on {string}")
+    public void habitWasCompletedOn(String habitName, String dateText) {
+        Long habitId = habitIds.get(habitName);
+        assertNotNull(habitId, "Habit was not found in scenario state: " + habitName);
+
+        Habit habit = habitRepository.findById(habitId)
+                .orElseThrow(() -> new AssertionError("Habit not found: " + habitName));
+
+        HabitLog log = new HabitLog(LocalDate.parse(dateText));
+        log.setHabit(habit);
+
+        HabitLog savedLog = habitLogRepository.save(log);
+        latestLogId = savedLog.getId();
+    }
+
+    @When("I send a POST request to complete habit {string} on {string}")
+    public void iSendAPostRequestToCompleteHabitOn(String habitName, String dateText) {
+        Long habitId = habitIds.get(habitName);
+        assertNotNull(habitId, "Habit was not found in scenario state: " + habitName);
+
+        String path = "/api/habits/" + habitId + "/logs?completedDate=" + dateText;
+        response = restTemplate.postForEntity(path, null, String.class);
+    }
+
+    @When("I send a DELETE request for the latest log of {string} through habit {string}")
+    public void iSendADeleteRequestForLatestLogThroughHabit(String originalHabitName, String throughHabitName) {
+        Long throughHabitId = habitIds.get(throughHabitName);
+        assertNotNull(throughHabitId, "Habit was not found in scenario state: " + throughHabitName);
+        assertNotNull(latestLogId, "No latest log ID was stored");
+
+        String path = "/api/habits/" + throughHabitId + "/logs/" + latestLogId;
+
+        response = restTemplate.exchange(
+                path,
+                HttpMethod.DELETE,
+                HttpEntity.EMPTY,
+                String.class
+        );
+    }
+
+    @When("I send a GET request for logs of habit {string}")
+    public void iSendAGetRequestForLogsOfHabit(String habitName) {
+        Long habitId = habitIds.get(habitName);
+        assertNotNull(habitId, "Habit was not found in scenario state: " + habitName);
+
+        response = restTemplate.getForEntity(
+                "/api/habits/" + habitId + "/logs",
+                String.class
+        );
+    }
+
+    @When("I send a GET request to {string} with If-None-Match from the previous response")
+    public void iSendAGetRequestWithIfNoneMatchFromPreviousResponse(String path) {
+        assertNotNull(latestEtag, "No ETag was stored from previous response");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setIfNoneMatch(latestEtag);
+
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+
+        response = restTemplate.exchange(
+                path,
+                HttpMethod.GET,
+                request,
+                String.class
+        );
+    }
+
+    @Then("the response should contain a validation error for field {string}")
+    public void theResponseShouldContainAValidationErrorForField(String fieldName) throws Exception {
+        JsonNode root = responseJson();
+        JsonNode fieldErrors = root.path("fieldErrors");
+
+        assertTrue(
+                fieldErrors.has(fieldName),
+                "Expected validation error for field: " + fieldName
+        );
+    }
+
+    @Then("the response should contain completed date {string}")
+    public void theResponseShouldContainCompletedDate(String dateText) throws Exception {
+        JsonNode root = responseJson();
+
+        assertTrue(
+                containsFieldValue(root, "completedDate", dateText),
+                "Expected response to contain completedDate: " + dateText
+        );
+    }
+
+    @Then("the response header {string} should be present")
+    public void theResponseHeaderShouldBePresent(String headerName) {
+        assertNotNull(response, "No HTTP response was stored");
+
+        String headerValue = response.getHeaders().getFirst(headerName);
+
+        assertNotNull(headerValue, "Expected response header to be present: " + headerName);
+
+        if ("ETag".equalsIgnoreCase(headerName)) {
+            latestEtag = headerValue;
+        }
+    }
+
+    @Then("the response header {string} should contain {string}")
+    public void theResponseHeaderShouldContain(String headerName, String expectedText) {
+        assertNotNull(response, "No HTTP response was stored");
+
+        String headerValue = response.getHeaders().getFirst(headerName);
+
+        assertNotNull(headerValue, "Expected response header to be present: " + headerName);
+        assertTrue(
+                headerValue.contains(expectedText),
+                "Expected header " + headerName + " to contain: " + expectedText
         );
     }
 
