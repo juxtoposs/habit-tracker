@@ -13,6 +13,9 @@ import java.util.Collections;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+/**
+ * Unit tests for ApiExceptionHandler (Global REST exception handler).
+ */
 class ApiExceptionHandlerTest {
 
     private final ApiExceptionHandler exceptionHandler = new ApiExceptionHandler();
