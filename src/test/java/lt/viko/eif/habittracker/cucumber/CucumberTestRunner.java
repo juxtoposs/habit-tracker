@@ -7,6 +7,9 @@ import org.junit.platform.suite.api.Suite;
 
 import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
 
+/**
+ * Test suite runner for executing Cucumber BDD scenarios.
+ */
 @Suite
 @IncludeEngines("cucumber")
 @SelectClasspathResource("features")

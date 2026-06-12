@@ -19,6 +19,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Cucumber step definitions mapping Gherkin steps to automated integration test actions.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class HabitStepDefinitions {
 
@@ -69,7 +72,6 @@ public class HabitStepDefinitions {
     @Then("the response should contain {int} habits")
     public void theResponseShouldContainHabits(int expectedCount) {
         assertNotNull(response.getBody());
-        // Simple validation relying on the database state matching the API response state
         assertEquals(expectedCount, habitRepository.count());
     }
 }

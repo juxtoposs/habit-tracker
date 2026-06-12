@@ -18,6 +18,9 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * Integration tests for HabitLogController (Acceptance testing).
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 class HabitLogControllerIntegrationTest {
