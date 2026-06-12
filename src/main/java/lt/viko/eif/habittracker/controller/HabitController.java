@@ -1,6 +1,7 @@
 package lt.viko.eif.habittracker.controller;
 
 import lt.viko.eif.habittracker.config.CacheSettings;
+import lt.viko.eif.habittracker.dto.HabitRequest;
 import lt.viko.eif.habittracker.exception.ResourceNotFoundException;
 import lt.viko.eif.habittracker.model.Habit;
 import lt.viko.eif.habittracker.service.HabitService;
@@ -73,7 +74,7 @@ public class HabitController {
         Habit habit = habitService.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Habit", id));
         HabitModel model = toModel(habit);
-        
+
         return ResponseEntity.ok()
                 .cacheControl(CacheSettings.shortPrivateCache())
                 .body(EntityModel.of(model));
@@ -82,12 +83,15 @@ public class HabitController {
     /**
      * Create a new habit.
      *
-     * @param habit habit data
+     * @param request habit data
      * @return created habit with status 201
      */
     @PostMapping
     @Operation(summary = "Create a new habit")
-    public ResponseEntity<EntityModel<HabitModel>> createHabit(@Valid @RequestBody Habit habit) {
+    public ResponseEntity<EntityModel<HabitModel>> createHabit(
+            @Valid @RequestBody HabitRequest request
+    ) {
+        Habit habit = toEntity(request);
         Habit created = habitService.create(habit);
         HabitModel model = toModel(created);
         return ResponseEntity.status(HttpStatus.CREATED).body(EntityModel.of(model));
@@ -97,7 +101,7 @@ public class HabitController {
      * Update an existing habit.
      *
      * @param id    habit identifier
-     * @param habit new data
+     * @param request new data
      * @return updated habit
      * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException if habit is not found
      */
@@ -105,7 +109,9 @@ public class HabitController {
     @Operation(summary = "Update a habit")
     public ResponseEntity<EntityModel<HabitModel>> updateHabit(
             @PathVariable Long id,
-            @Valid @RequestBody Habit habit) {
+            @Valid @RequestBody HabitRequest request
+    ) {
+        Habit habit = toEntity(request);
         Habit updated = habitService.update(id, habit);
         HabitModel model = toModel(updated);
         return ResponseEntity.ok(EntityModel.of(model));
@@ -137,5 +143,15 @@ public class HabitController {
         model.add(linkTo(methodOn(HabitLogController.class).getLogsForHabit(habit.getId())).withRel("logs"));
         model.add(linkTo(methodOn(HabitController.class).deleteHabit(habit.getId())).withRel("delete"));
         return model;
+    }
+
+    /**
+     * Converts a habit request DTO to a Habit entity.
+     *
+     * @param request request DTO containing habit input data
+     * @return Habit entity
+     */
+    private Habit toEntity(HabitRequest request) {
+        return new Habit(request.getName(), request.getDescription());
     }
 }
