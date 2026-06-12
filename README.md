@@ -55,9 +55,10 @@ The application starts on **http://localhost:8080**.
 
 | Method | Path | Description | Status |
 |---|---|---|---|
-| `GET` | `/api/habits/{id}/logs` | Get completion logs | 200 |
-| `POST` | `/api/habits/{id}/logs` | Mark habit as completed (`?completedDate=yyyy-MM-dd`) | 201 / 400 |
-| `DELETE` | `/api/habits/{id}/logs/{logId}` | Delete a log entry | 204 |
+| `GET` | `/api/habits/{id}/logs` | Get completion logs for a habit | 200 / 404 |
+| `GET` | `/api/habits/{id}/logs/{logId}` | Get a single completion log by ID | 200 / 404 |
+| `POST` | `/api/habits/{id}/logs` | Mark habit as completed (`?completedDate=yyyy-MM-dd`) | 201 / 400 / 404 / 409 |
+| `DELETE` | `/api/habits/{id}/logs/{logId}` | Delete a log entry belonging to the selected habit | 204 / 404 |
 
 ### Example: Create a habit
 
@@ -82,6 +83,23 @@ Response:
   }
 }
 ```
+---
+
+## ⚡ Caching
+
+Read-only API responses use short private HTTP caching with ETag support.
+
+Example cache validation flow:
+```bash
+curl -i [http://localhost:8080/api/habits](http://localhost:8080/api/habits)
+```
+The response includes headers such as:
+```http
+ETag: "..." Cache-Control: max-age=30, private, must-revalidate
+```
+
+Clients can reuse the `ETag` value with `If-None-Match`. If the resource has not changed, the API returns `304 Not Modified`.
+
 
 ---
 
@@ -100,18 +118,33 @@ Controller  →  Service (interface)  →  ServiceImpl  →  Repository  →  H2
 
 ## 🧪 Tests
 
-Run all tests:
+- Integration tests for controller endpoints (`MockMvc` + embedded Spring context)
+- Unit tests for service logic, DTO validation, entity lifecycle behavior, and API error handling
+- BDD scenarios written in Gherkin / Cucumber for end-to-end API behavior
 
+
+Run all tests:
 ```bash
 mvn test
 ```
+Test results: there should be **46 passed tests**
 
-The project includes:
-- Integration tests for all controller endpoints (`MockMvc` + embedded context)
-- Unit tests for service logic (happy paths + error cases)
-- BDD scenarios written in Gherkin / Cucumber (`.feature` files)
+Current Cucumber scenarios cover:
+- API root discovery through HATEOAS links
+- Creating habits successfully
+- Rejecting invalid habit input with field validation errors
+- Retrieving all habits with collection links
+- Marking a habit as completed on a specific date
+- Preventing duplicate completion logs
+- Preventing deletion of a completion log through the wrong habit URL
+- Validating HTTP cache behavior with `ETag`, `Cache-Control`, and `304 Not Modified`
 
-**Test results: 19 / 19 passed ✅**
+Cucumber reports are generated after test execution:
+| Report | Path |
+|---|---|
+| HTML report | `target/cucumber-report.html` |
+| JSON report | `target/cucumber-report.json` |
+
 
 ---
 
