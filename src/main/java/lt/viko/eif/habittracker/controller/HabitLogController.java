@@ -53,9 +53,12 @@ public class HabitLogController {
                 .map(this::toModel)
                 .collect(Collectors.toList());
 
-        CollectionModel<HabitLogModel> collection = CollectionModel.of(models,
+        CollectionModel<HabitLogModel> collection = CollectionModel.of(
+                models,
                 linkTo(methodOn(HabitLogController.class).getLogsForHabit(habitId)).withSelfRel(),
-                linkTo(methodOn(HabitController.class).getHabitById(habitId)).withRel("habit"));
+                linkTo(methodOn(HabitController.class).getHabitById(habitId)).withRel("habit"),
+                linkTo(methodOn(HabitLogController.class).getLogsForHabit(habitId)).withRel("mark-completed")
+        );
 
         return ResponseEntity.ok()
                 .cacheControl(CacheSettings.shortPrivateCache())
@@ -73,12 +76,12 @@ public class HabitLogController {
      */
     @PostMapping
     @Operation(summary = "Mark habit as completed")
-    public ResponseEntity<EntityModel<HabitLogModel>> markCompleted(
+    public ResponseEntity<HabitLogModel> markCompleted(
             @PathVariable Long habitId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate completedDate) {
         HabitLog log = habitLogService.markCompleted(habitId, completedDate);
         HabitLogModel model = toModel(log);
-        return ResponseEntity.status(HttpStatus.CREATED).body(EntityModel.of(model));
+        return ResponseEntity.status(HttpStatus.CREATED).body(model);
     }
 
     /**
@@ -104,15 +107,47 @@ public class HabitLogController {
      */
     private HabitLogModel toModel(HabitLog log) {
         HabitLogModel model = new HabitLogModel(log);
-        if (log.getHabit() != null) {
-            model.add(linkTo(methodOn(HabitLogController.class)
-                    .getLogsForHabit(log.getHabit().getId())).withRel("logs"));
-            model.add(linkTo(methodOn(HabitController.class)
-                    .getHabitById(log.getHabit().getId())).withRel("habit"));
+
+        if (log.getHabit() == null) {
+            return model;
         }
+
+        Long habitId = log.getHabit().getId();
+
         model.add(linkTo(methodOn(HabitLogController.class)
-                .deleteLog(log.getHabit() != null ? log.getHabit().getId() : 0L, log.getId()))
-                .withRel("delete"));
+                .getLogById(habitId, log.getId())).withSelfRel());
+
+        model.add(linkTo(methodOn(HabitLogController.class)
+                .getLogsForHabit(habitId)).withRel("logs"));
+
+        model.add(linkTo(methodOn(HabitController.class)
+                .getHabitById(habitId)).withRel("habit"));
+
+        model.add(linkTo(methodOn(HabitLogController.class)
+                .deleteLog(habitId, log.getId())).withRel("delete"));
+
         return model;
+    }
+
+    /**
+     * Get a single completion log for a habit.
+     *
+     * @param habitId habit ID
+     * @param logId log ID
+     * @return completion log with HATEOAS links
+     * @throws lt.viko.eif.habittracker.exception.ResourceNotFoundException if habit or log is not found
+     */
+    @GetMapping("/{logId}")
+    @Operation(summary = "Get completion log by ID")
+    public ResponseEntity<HabitLogModel> getLogById(
+            @PathVariable Long habitId,
+            @PathVariable Long logId
+    ) {
+        HabitLog log = habitLogService.findByIdAndHabitId(habitId, logId);
+        HabitLogModel model = toModel(log);
+
+        return ResponseEntity.ok()
+                .cacheControl(CacheSettings.shortPrivateCache())
+                .body(model);
     }
 }

@@ -54,7 +54,11 @@ public class HabitController {
                 .collect(Collectors.toList());
 
         Link selfLink = linkTo(methodOn(HabitController.class).getAllHabits()).withSelfRel();
-        CollectionModel<HabitModel> collection = CollectionModel.of(models, selfLink);
+        CollectionModel<HabitModel> collection = CollectionModel.of(
+                models,
+                selfLink,
+                linkTo(HabitController.class).withRel("create-habit")
+        );
 
         return ResponseEntity.ok()
                 .cacheControl(CacheSettings.shortPrivateCache())
@@ -70,14 +74,14 @@ public class HabitController {
      */
     @GetMapping("/{id}")
     @Operation(summary = "Get habit by ID")
-    public ResponseEntity<EntityModel<HabitModel>> getHabitById(@PathVariable Long id) {
+    public ResponseEntity<HabitModel> getHabitById(@PathVariable Long id) {
         Habit habit = habitService.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Habit", id));
         HabitModel model = toModel(habit);
 
         return ResponseEntity.ok()
                 .cacheControl(CacheSettings.shortPrivateCache())
-                .body(EntityModel.of(model));
+                .body(model);
     }
 
     /**
@@ -107,14 +111,14 @@ public class HabitController {
      */
     @PutMapping("/{id}")
     @Operation(summary = "Update a habit")
-    public ResponseEntity<EntityModel<HabitModel>> updateHabit(
+    public ResponseEntity<HabitModel> updateHabit(
             @PathVariable Long id,
             @Valid @RequestBody HabitRequest request
     ) {
         Habit habit = toEntity(request);
         Habit updated = habitService.update(id, habit);
         HabitModel model = toModel(updated);
-        return ResponseEntity.ok(EntityModel.of(model));
+        return ResponseEntity.ok(model);
     }
 
     /**
@@ -139,9 +143,22 @@ public class HabitController {
      */
     private HabitModel toModel(Habit habit) {
         HabitModel model = new HabitModel(habit);
-        model.add(linkTo(methodOn(HabitController.class).getHabitById(habit.getId())).withSelfRel());
-        model.add(linkTo(methodOn(HabitLogController.class).getLogsForHabit(habit.getId())).withRel("logs"));
-        model.add(linkTo(methodOn(HabitController.class).deleteHabit(habit.getId())).withRel("delete"));
+
+        model.add(linkTo(methodOn(HabitController.class)
+                .getHabitById(habit.getId())).withSelfRel());
+
+        model.add(linkTo(methodOn(HabitController.class)
+                .getAllHabits()).withRel("habits"));
+
+        model.add(linkTo(methodOn(HabitLogController.class)
+                .getLogsForHabit(habit.getId())).withRel("logs"));
+
+        model.add(linkTo(methodOn(HabitController.class)
+                .updateHabit(habit.getId(), null)).withRel("update"));
+
+        model.add(linkTo(methodOn(HabitController.class)
+                .deleteHabit(habit.getId())).withRel("delete"));
+
         return model;
     }
 
