@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.hateoas.CollectionModel;
-import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -92,15 +91,14 @@ public class HabitController {
      */
     @PostMapping
     @Operation(summary = "Create a new habit")
-    public ResponseEntity<EntityModel<HabitModel>> createHabit(
+    public ResponseEntity<HabitModel> createHabit(
             @Valid @RequestBody HabitRequest request
     ) {
         Habit habit = toEntity(request);
         Habit created = habitService.create(habit);
         HabitModel model = toModel(created);
-        return ResponseEntity.status(HttpStatus.CREATED).body(EntityModel.of(model));
+        return ResponseEntity.status(HttpStatus.CREATED).body(model);
     }
-
     /**
      * Update an existing habit.
      *
